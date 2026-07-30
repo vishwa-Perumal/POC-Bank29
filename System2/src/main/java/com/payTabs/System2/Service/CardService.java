@@ -27,23 +27,24 @@ public class CardService {
 
     public ResponseEntity<String> validateCard(TransactionRequest request) {
 
-        // 1. Check Card
-        Card card = repository.findById(request.getCardNumber()).orElse(null);
+        // Check Card
+        String hashedCardNumber = HashUtil.sha256(request.getCardNumber());
+        Card card = repository.findById(hashedCardNumber).orElse(null);
 
-        if (card == null) {
-            return ResponseEntity.badRequest().body("FAILED : Invalid Card");
+        if(card == null){
+            return ResponseEntity.badRequest()
+                    .body("FAILED : Invalid Card");
         }
 
-        // 2. Check PIN
+        // Check PIN
         String inputHash = HashUtil.sha256(request.getPin());
 
         if (!inputHash.equals(card.getPinHash())) {
             return ResponseEntity.badRequest().body("FAILED : Invalid PIN");
         }
 
-        // 3. Withdrawal
+        // Withdrawal
         if (request.getTransactionType().equalsIgnoreCase("withdrawal")) {
-
             if (request.getAmount() > card.getBalance()) {
                 return ResponseEntity.badRequest()
                         .body("FAILED : Insufficient Balance");
@@ -60,7 +61,7 @@ public class CardService {
                             + card.getBalance());
         }
 
-        // 4. Top Up
+        // Top Up
         if (request.getTransactionType().equalsIgnoreCase("top_up")) {
 
             card.setBalance(card.getBalance() + request.getAmount());
@@ -74,7 +75,7 @@ public class CardService {
                             + card.getBalance());
         }
 
-        // 5. Invalid Transaction Type
+        // Invalid Transaction Type
         return ResponseEntity.badRequest()
                 .body("FAILED : Invalid Transaction Type");
     }

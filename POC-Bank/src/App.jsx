@@ -124,21 +124,14 @@ const getAllTransactions = async () => {
 };
 
   return (
-
-    <div>
-
+    <div className="app-container" >
       {/* Home */}
-
       {page === "home" && (
-
         <>
-
           <h1>🏦 Banking System</h1>
-
           <button onClick={() => setPage("customer")}>
             Customer
           </button>
-
           <button onClick={() => {
               setPage("admin");
               getAllTransactions();
@@ -148,25 +141,18 @@ const getAllTransactions = async () => {
           </button>
 
         </>
-
       )}
 
       {/* Customer */}
-
       {page === "customer" && (
-
         <>
-
           <h1>Customer Portal</h1>
-
           <br />
-
           <input
             placeholder="Card Number"
             value={cardNumber}
             onChange={(e) => setCardNumber(e.target.value)}
           />
-
           <br /><br />
 
           <input

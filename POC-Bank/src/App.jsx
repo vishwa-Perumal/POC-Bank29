@@ -1,36 +1,37 @@
 import { useState } from "react";
-import axios from "axios";
+import {
+  checkBalanceApi,
+  submitTransactionApi,
+  getHistoryApi,
+  getAllTransactionsApi
+} from "./services/api";
+
+import Home from "./components/Home";
+import Customer from "./components/Customer";
+import Admin from "./components/Admin";
 
 function App() {
 
-  // Page Navigation
   const [page, setPage] = useState("home");
 
-  // Customer Form Data
   const [cardNumber, setCardNumber] = useState("");
   const [pin, setPin] = useState("");
   const [amount, setAmount] = useState("");
   const [transactionType, setTransactionType] = useState("withdrawal");
 
-  // Customer Data
   const [balance, setBalance] = useState("");
   const [history, setHistory] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
 
-  // ------------------------------
-  // Check Balance
-  // ------------------------------
   const checkBalance = async () => {
 
     try {
 
-      const response = await axios.get(
-        `http://localhost:8081/customer/balance/${cardNumber}`
-      );
+      const response = await checkBalanceApi(cardNumber);
 
       setBalance(response.data);
 
-    } catch (error) {
+    } catch {
 
       alert("Customer Not Found");
 
@@ -38,22 +39,18 @@ function App() {
 
   };
 
-  // ------------------------------
-  // Submit Transaction
-  // ------------------------------
   const submitTransaction = async () => {
 
     try {
 
-      const response = await axios.post(
-        "http://localhost:8080/customerrequests1",
-        {
-          cardNumber: cardNumber,
-          pin: pin,
-          transactionType: transactionType,
-          amount: Number(amount)
-        }
-      );
+      const response = await submitTransactionApi({
+
+        cardNumber,
+        pin,
+        transactionType,
+        amount: Number(amount)
+
+      });
 
       alert(response.data);
 
@@ -63,38 +60,35 @@ function App() {
 
       if (error.response) {
 
-    console.log(error.response.data);
+        if (typeof error.response.data === "string") {
 
-    if (typeof error.response.data === "string") {
-        alert(error.response.data);
-    } else {
-        alert(JSON.stringify(error.response.data));
-    }
+          alert(error.response.data);
 
-    } else {
+        } else {
 
-    alert(error.message);
+          alert(JSON.stringify(error.response.data));
 
-    }
+        }
+
+      } else {
+
+        alert(error.message);
+
+      }
 
     }
 
   };
 
-  // ------------------------------
-  // Transaction History
-  // ------------------------------
   const getHistory = async () => {
 
     try {
 
-      const response = await axios.get(
-        `http://localhost:8081/customer/history/${cardNumber}`
-      );
+      const response = await getHistoryApi(cardNumber);
 
       setHistory(response.data);
 
-    } catch (error) {
+    } catch {
 
       alert("Unable to Load History");
 
@@ -102,227 +96,78 @@ function App() {
 
   };
 
-  // ------------------------------
-// Admin - Get All Transactions
-// ------------------------------
-const getAllTransactions = async () => {
+  const getAllTransactions = async () => {
 
-  try {
+    try {
 
-    const response = await axios.get(
-      "http://localhost:8081/admin/transactions"
-    );
+      const response = await getAllTransactionsApi();
 
-    setAllTransactions(response.data);
+      setAllTransactions(response.data);
 
-  } catch (error) {
+    } catch {
 
-    alert("Unable to Load Transactions");
+      alert("Unable to Load Transactions");
 
-  }
+    }
 
-};
+  };
 
   return (
-    <div className="app-container" >
-      {/* Home */}
+
+    <div className="app-container">
+
       {page === "home" && (
-        <>
-          <h1>🏦 Banking System</h1>
-          <button onClick={() => setPage("customer")}>
-            Customer
-          </button>
-          <button onClick={() => {
-              setPage("admin");
-              getAllTransactions();
-            }}
-          >
-           Admin
-          </button>
 
-        </>
+        <Home
+          setPage={setPage}
+          getAllTransactions={getAllTransactions}
+        />
+
       )}
 
-      {/* Customer */}
       {page === "customer" && (
-        <>
-          <h1>Customer Portal</h1>
-          <br />
-          <input
-            placeholder="Card Number"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
-          />
-          <br /><br />
 
-          <input
-            type="password"
-            placeholder="PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
+        <Customer
 
-          <br /><br />
+          cardNumber={cardNumber}
+          setCardNumber={setCardNumber}
 
-          <input
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
+          pin={pin}
+          setPin={setPin}
 
-          <br /><br />
+          amount={amount}
+          setAmount={setAmount}
 
-          <select
-            value={transactionType}
-            onChange={(e) => setTransactionType(e.target.value)}
-          >
+          transactionType={transactionType}
+          setTransactionType={setTransactionType}
 
-            <option value="withdrawal">
-              Withdrawal
-            </option>
+          balance={balance}
 
-            <option value="top_up">
-              Top Up
-            </option>
+          history={history}
 
-          </select>
+          checkBalance={checkBalance}
+          submitTransaction={submitTransaction}
+          getHistory={getHistory}
 
-          <br /><br />
+          setPage={setPage}
 
-          <button onClick={checkBalance}>
-            Check Balance
-          </button>
-
-          <button onClick={submitTransaction}>
-            Submit Transaction
-          </button>
-
-          <button onClick={getHistory}>
-            Transaction History
-          </button>
-
-          <br /><br />
-
-          <h3>
-            Balance : {balance}
-          </h3>
-
-          <hr />
-
-          <h2>Transaction History</h2>
-
-          <table border="1" cellPadding="10">
-
-            <thead>
-
-              <tr>
-
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Time</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {history.map((tx) => (
-
-                <tr key={tx.id}>
-
-                  <td>{tx.transactionType}</td>
-
-                  <td>{tx.amount}</td>
-
-                  <td>{tx.status}</td>
-
-                  <td>{tx.transactionTime}</td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-          <br />
-
-          <button onClick={() => setPage("home")}>
-            Back
-          </button>
-
-        </>
+        />
 
       )}
 
-      {/* Admin */}
+      {page === "admin" && (
 
-      {/* Admin */}
+        <Admin
 
-{page === "admin" && (
+          allTransactions={allTransactions}
 
-  <>
+          getAllTransactions={getAllTransactions}
 
-    <h1>Admin Portal</h1>
+          setPage={setPage}
 
-    <button onClick={getAllTransactions}>
-      Refresh & Transcations
-    </button>
+        />
 
-    <br /><br />
-
-    <table border="1" cellPadding="10">
-
-      <thead>
-
-        <tr>
-
-          <th>Card Number</th>
-          <th>Transaction Type</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Transaction Time</th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {allTransactions.map((tx) => (
-
-          <tr key={tx.id}>
-
-            <td>{tx.cardNumber}</td>
-
-            <td>{tx.transactionType}</td>
-
-            <td>{tx.amount}</td>
-
-            <td>{tx.status}</td>
-
-            <td>{tx.transactionTime}</td>
-
-          </tr>
-
-        ))}
-
-      </tbody>
-
-    </table>
-
-    <br />
-
-    <button onClick={() => setPage("home")}>
-      Back
-    </button>
-
-  </>
-
-)}
+      )}
 
     </div>
 
